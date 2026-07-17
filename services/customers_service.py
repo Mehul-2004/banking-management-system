@@ -1,5 +1,7 @@
 from database.connection import get_connection,close_connection
 import mysql.connector
+
+
 def get_customer_input():
     first_name = input("Enter customers first name : ")
     last_name = input("Enter customers last name : ")
@@ -18,13 +20,26 @@ def get_customer_input():
         "email" :email,
         "address" :address,
     }
-def add_customer():
+def display_customer(customer):
+    print("=" * 40)
+    print(f" Customer iD    : {customer[0]}")
+    print(f" Name           : {customer[1]} {customer[2]}")
+    print(f" Gender         : {customer[3]}")
+    print(f"Date of Birth   : {customer[4]}")
+    print(f" Mobile Number  : {customer[5]}")
+    print(f" Email ID       : {customer[6]}")
+    print(f" Address        : {customer[7]}")
+
+def add_customers():
     connection = None
     cursor = None
     try:
         #connect to database
         connection , cursor = get_connection()
 
+        if connection is None:
+            return 
+        
         # get user input
         customer = get_customer_input()
 
@@ -65,7 +80,66 @@ def add_customer():
         close_connection(connection,cursor)
     
 
-# def view_customer():
-# def search_customer():
+def view_customers():
+    connection = None
+    cursor = None
+    try:
+        connection,cursor = get_connection()
+
+        if connection is None:
+            return
+        
+        query = "Select * from customers"
+
+        cursor.execute(query,)
+
+        customers = cursor.fetchall()
+
+        if not customers:
+            print("No customers found")
+            return
+        
+        for customer in customers:
+            display_customer(customer)
+
+
+    except mysql.connector.Error as e:
+        print(f"Database Error : {e}")
+
+    finally:
+        close_connection(connection,cursor)
+
+def search_customer():
+    connection = None
+    cursor = None
+
+    try :
+        connection,cursor = get_connection()
+
+        if connection is None:
+            print("Database Connection failed")
+            return
+        
+        customer_id = int(input("Enter the customer id : "))
+        
+        query = "Select * from customers where customer_id = %s"
+        
+        cursor.execute(query,(customer_id,))
+        
+        customer = cursor.fetchone()
+        
+        if  customer :
+           display_customer(customer)
+        
+        else:
+            print("No customer Found")
+
+    except mysql.connector.Error as e:
+        print(f"Database Error : {e}")
+    
+    finally:
+        close_connection(connection,cursor)
+        
+
 # def update_customer():
 # def delete_customer():
