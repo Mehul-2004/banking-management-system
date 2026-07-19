@@ -141,5 +141,77 @@ def search_customer():
         close_connection(connection,cursor)
         
 
-# def update_customer():
+def update_customer():
+    connection = None
+    cursor = None
+
+    try :
+        connection , cursor = get_connection()
+
+        if connection is None:
+            print("Database Connection failed")
+            return
+        
+        customer_id  = int(input("Enter customer_id : "))
+
+        query = "select * from customers where customer_id = %s"
+        
+        cursor.execute(query,(customer_id,))
+        
+        customer = cursor.fetchone()
+
+        if customer :
+            display_customer(customer)
+        else:
+            print("Customer not found")
+            return
+        
+        print("\nWhat do you want to update?")
+        print("1. First Name")
+        print("2. Last Name")
+        print("3. Gender")
+        print("4. Date of Birth")
+        print("5. Mobile Number")
+        print("6. Email")
+        print("7. Address")
+        print("8. Cancel")
+
+        choice = input("Enter your choice: ")
+        update_fields = {
+            "1" : "first_name",
+            "2" : "last_name",
+            "3" : "gender",
+            "4" : "date_of_birth",
+            "5" : "mobile",
+            "6" : "email",
+            "7" : "address",
+        }
+        if choice == "8":
+            print("Update Cancelled")
+            return
+
+        if choice not in update_fields:
+            print("Invalid Choice")
+            return
+       
+        field = update_fields[choice]
+        
+        new_value = input(f"Enter new {field.replace('_',' ')} : ")
+
+        query = f"""
+        update customers set {field} = %s 
+        where customer_id = %s """
+
+        cursor.execute(query,(new_value,customer_id))
+        connection.commit()
+        print("Customer Updated Successfully")
+
+    except mysql.connector.Error as e:
+        print(f"Error : {e}")
+    
+    finally :
+        close_connection(connection,cursor)
+
+    
+
 # def delete_customer():
