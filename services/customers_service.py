@@ -20,6 +20,9 @@ def get_customer_input():
         "email" :email,
         "address" :address,
     }
+
+
+    
 def display_customer(customer):
     print("=" * 40)
     print(f" Customer iD    : {customer[0]}")
@@ -214,4 +217,51 @@ def update_customer():
 
     
 
-# def delete_customer():
+def delete_customer():
+
+    connection = None
+    cursor = None
+
+    try:
+
+        connection,cursor = get_connection()
+
+        if connection is None:
+            print("Failed to connect database")
+            return
+        
+        customer_id = int(input("Enter Customer ID : "))
+
+        query = "Select * from customers where customer_id = %s"
+
+        cursor.execute(query,(customer_id,))
+
+        customer = cursor.fetchone()
+        if customer:
+            display_customer(customer)
+
+        else:
+            print("no customer found")
+            return
+        
+        cnf = input("Do you confirm want to delete this data (Y/N) ? ")
+
+        if cnf.upper() != "Y":
+            print("Deletion Cancelled")
+            return
+
+        # else:
+        #     print("Proceed")
+
+        query = "Delete from customers where customer_id = %s"
+
+        cursor.execute(query,(customer_id,))
+        
+        connection.commit()
+        print("Successfully deleted ")
+
+    except mysql.connector.Error as e:
+        print(f"Error : {e}")
+
+    finally:
+        close_connection(connection,cursor)

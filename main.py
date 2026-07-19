@@ -3,7 +3,8 @@ from services.customers_service import (
     add_customers,
     view_customers,
     search_customer,
-    update_customer)
+    update_customer,
+    delete_customer)
 
 def test_connection():
     connection,cursor = get_connection()
@@ -40,6 +41,8 @@ def main():
             search_customer()
         elif choice == "4":
             update_customer()
+        elif choice == "5":
+            delete_customer()
         elif choice == "6":
             print("Thank you")
             break     
