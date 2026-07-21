@@ -265,3 +265,34 @@ def delete_customer():
 
     finally:
         close_connection(connection,cursor)
+
+def create_customer():
+
+    connection = None
+    cursor = None
+
+    if connection is None:
+        print("No database is connected")
+        return
+    try:
+        connection,cursor = get_connection(connection,cursor)
+
+        customer_id = input("Enter Customer id : ")
+
+        query = "select * from customers where customer_id = %s"
+        cursor.execute(query,(customer_id,))
+        customer = cursor.fetchone()
+        if customer :
+            display_customer(customer)
+
+        else:
+            print("No customer found")
+
+        
+
+    
+    except mysql.connector.Error as e:
+        print(f"Error : {e}")
+
+    finally:
+        close_connection(connection,cursor)
