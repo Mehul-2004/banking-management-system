@@ -4,7 +4,9 @@ from services.customers_service import (
     view_customers,
     search_customer,
     update_customer,
-    delete_customer)
+    delete_customer,
+    create_account,
+    view_account)
 
 def test_connection():
     connection,cursor = get_connection()
@@ -28,7 +30,9 @@ def main():
         print("3. Search Customer") 
         print("4. Update Customer") 
         print("5. Delete Customer") 
-        print("6. Exit") 
+        print("6. Create Account") 
+        print("7. View Account") 
+        print("8. Exit") 
         print("=" * 40)
 
         choice = input("Select an option : ")
@@ -44,6 +48,10 @@ def main():
         elif choice == "5":
             delete_customer()
         elif choice == "6":
+            create_account()
+        elif choice == "7":
+            view_account()
+        elif choice == "8":
             print("Thank you")
             break     
         else:
