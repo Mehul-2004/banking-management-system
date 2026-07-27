@@ -5,8 +5,20 @@ from services.customers_service import (
     search_customer,
     update_customer,
     delete_customer,
-    create_account,
-    view_account)
+)
+from services.accounts_service import(
+        create_account,
+        view_account,
+        search_account,
+        deposit_money,
+        withdraw_money,
+        transfer_money
+
+)
+from services.transaction_history import(
+    view_transactions,
+
+)
 
 def test_connection():
     connection,cursor = get_connection()
@@ -32,7 +44,12 @@ def main():
         print("5. Delete Customer") 
         print("6. Create Account") 
         print("7. View Account") 
-        print("8. Exit") 
+        print("8. Search Account") 
+        print("9. Deposit Money") 
+        print("10. Withdraw money") 
+        print("11. Transfer Money") 
+        print("12. View Transactions") 
+        print("13. Exit") 
         print("=" * 40)
 
         choice = input("Select an option : ")
@@ -52,6 +69,19 @@ def main():
         elif choice == "7":
             view_account()
         elif choice == "8":
+            search_account()
+        elif choice == "9":
+            deposit_money()
+        elif choice == "10":
+            withdraw_money()
+        elif choice == "11":
+            transfer_money()
+        elif choice == "12":
+            view_transactions()
+
+
+
+        elif choice == "13":
             print("Thank you")
             break     
         else:
