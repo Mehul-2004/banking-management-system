@@ -1,6 +1,33 @@
 from database.connection import get_connection,close_connection
-from services.customers_service import display_customer 
+from services.customers_service import display_customer ,get_customer
 import mysql.connector
+from utils.validators import (
+    get_valid_amount,
+    get_non_empty_string,
+)
+
+def get_account(cursor,account_number):
+    """
+    Fetch a single account using its account number.
+    """
+
+    query = """
+        Select
+            accounts.account_id,
+            accounts.account_number,
+            customers.first_name,
+            customers.last_name,
+            accounts.account_type,
+            accounts.balance,
+            accounts.status
+        from accounts
+        inner join customers
+        on accounts.customer_id = customers.customer_id
+        where accounts.account_number = %s
+            """
+
+    cursor.execute(query,(account_number,))
+    return cursor.fetchone()
 
 def create_account():
 
@@ -15,11 +42,8 @@ def create_account():
             return
 
         customer_id = int(input("Enter Customer id : "))
+        customer = get_customer(cursor,customer_id)
 
-        query = "select * from customers where customer_id = %s"
-        cursor.execute(query,(customer_id,))
-
-        customer = cursor.fetchone()
         if customer :
             display_customer(customer)
 
@@ -132,11 +156,11 @@ def view_account():
 
 def display_account(account):
     print("\n" + "=" * 40)
-    print(f"Account Number : {account[0]}")
-    print(f"Customer Name  : {account[1]} {account[2]}")
-    print(f"Account Type   : {account[3]}")
-    print(f"Balance        : {account[4]}")
-    print(f"Status         : {account[5]}")
+    print(f"Account Number : {account[1]}")
+    print(f"Customer Name  : {account[2]} {account[3]}")
+    print(f"Account Type   : {account[4]}")
+    print(f"Balance        : {account[5]}")
+    print(f"Status         : {account[6]}")
 
 
 def search_account():
@@ -150,25 +174,26 @@ def search_account():
             print("No database connected")
             return
         
-        acc_number = int(input("Enter Account Number : "))
+        account_number = int(input("Enter Account Number : "))
 
-        query = """
-            Select 
-                accounts.account_number,
-                customers.first_name,
-                customers.last_name,
-                accounts.account_type,
-                accounts.balance,
-                accounts.status
-            from accounts
-            inner join customers on 
-            accounts.customer_id = customers.customer_id
-            where accounts.account_number = %s;
-                """
+        # query = """
+        #     Select 
+        #         accounts.account_number,
+        #         customers.first_name,
+        #         customers.last_name,
+        #         accounts.account_type,
+        #         accounts.balance,
+        #         accounts.status
+        #     from accounts
+        #     inner join customers on 
+        #     accounts.customer_id = customers.customer_id
+        #     where accounts.account_number = %s;
+        #         """
         
-        cursor.execute(query,(acc_number,))
+        # cursor.execute(query,(account_number,))
 
-        account = cursor.fetchone()
+        # account = cursor.fetchone()
+        account = get_account(cursor,account_number)
 
         if account:
             display_account(account)
@@ -196,23 +221,7 @@ def deposit_money():
         
         account_number = int(input("Enter Account Number : "))
 
-        query = """
-            Select 
-                accounts.account_id,
-                accounts.account_number,
-                customers.first_name,
-                customers.last_name,
-                accounts.account_type,
-                accounts.balance,
-                accounts.status
-            from accounts
-            inner join customers on 
-            accounts.customer_id = customers.customer_id
-            where accounts.account_number = %s;
-                """
-        
-        cursor.execute(query,(account_number,))
-        account = cursor.fetchone()
+        account = get_account(cursor,account_number)
 
         if account :
             display_account(account)
@@ -221,7 +230,7 @@ def deposit_money():
             print("Account Not Found")
             return
         
-        dep_amt = float(input("Enter amount to Deposit : "))
+        dep_amt = get_valid_amount("Enter amount to Deposit : ")
 
         if dep_amt <= 0:
             print("Deposit amount must be greater than 0")
@@ -264,6 +273,7 @@ def deposit_money():
     
     finally:
         close_connection(connection,cursor)
+
 def withdraw_money():
 
     connection = None
@@ -278,23 +288,7 @@ def withdraw_money():
         
         account_number = int(input("Enter Account Number : "))
 
-        query = """
-            Select 
-                accounts.account_id,
-                accounts.account_number,
-                customers.first_name,
-                customers.last_name,
-                accounts.account_type,
-                accounts.balance,
-                accounts.status
-            from accounts
-            inner join customers on 
-            accounts.customer_id = customers.customer_id
-            where accounts.account_number = %s;
-                """
-        
-        cursor.execute(query,(account_number,))
-        account = cursor.fetchone()
+        account = get_account(cursor,account_number)
 
         if account :
             display_account(account)
@@ -303,7 +297,8 @@ def withdraw_money():
             print("Account Not Found")
             return
         
-        wid_amt = float(input("Enter amount to Deposit : "))
+        wid_amt = get_valid_amount("Enter amount to withdraw : ")
+
         balance = account[5]
         if wid_amt <= 0 :
             print("Withdrawal amount must be greater than 0")
@@ -373,22 +368,7 @@ def transfer_money():
         #sender
         sender_acc_num = int(input("Enter Sender Account Number : "))
 
-        query = """
-            select
-                accounts.account_id,
-                accounts.account_number,
-                customers.first_name,
-                customers.last_name,
-                accounts.account_type,
-                accounts.balance,
-                accounts.status
-            from accounts
-            inner join customers on
-            accounts.customer_id = customers.customer_id
-            where accounts.account_number = %s"""
-
-        cursor.execute(query,(sender_acc_num,))
-        sender = cursor.fetchone()
+        sender = get_account(cursor,sender_acc_num)
 
         if sender:
             display_account(sender)
@@ -397,22 +377,8 @@ def transfer_money():
             return
         #receiver
         receiver_acc_num = int(input("Enter Receivers Account Number : "))
-        query = """
-            select
-                accounts.account_id,
-                accounts.account_number,
-                customers.first_name,
-                customers.last_name,
-                accounts.account_type,
-                accounts.balance,
-                accounts.status
-            from accounts
-            inner join customers on
-            accounts.customer_id = customers.customer_id
-            where accounts.account_number = %s"""
 
-        cursor.execute(query,(receiver_acc_num,))
-        receiver = cursor.fetchone()
+        receiver = get_account(cursor,receiver_acc_num)
 
         if receiver:
             display_account(receiver)
@@ -425,7 +391,7 @@ def transfer_money():
             return
         
         #amount
-        transfer_amount = float(input("Enter the amount to transfer : "))
+        transfer_amount = get_valid_amount("Enter the amount to transfer : ")
 
         if transfer_amount <= 0:
             print("Transfer amount must be greater than 0.")

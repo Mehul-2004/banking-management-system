@@ -1,14 +1,20 @@
 from database.connection import get_connection,close_connection
 import mysql.connector
+from utils.validators import (
+    get_non_empty_string,
+    get_valid_email,
+    get_valid_customer_id,
+    get_valid_mobile
+)
 
 def get_customer_input():
-    first_name = input("Enter customers first name : ")
-    last_name = input("Enter customers last name : ")
+    first_name = get_non_empty_string("Enter First Name ")
+    last_name = get_non_empty_string("Enter customers last name : ")
     gender = input("Enter gender : ")       
     date_of_birth = input("Enter date of birth (YYYY-MM-DD) : ")
-    mobile = input("Enter mobile number : ")
-    email = input("Enter email id : ")
-    address = input("Enter address : ")
+    mobile = get_valid_mobile("Enter mobile number : ")
+    email = get_valid_email("Enter email id : ")
+    address = get_non_empty_string("Enter address : ")
 
     return{
         "first_name" :first_name,
@@ -21,7 +27,15 @@ def get_customer_input():
     }
 
 
-    
+def get_customer(cursor,customer_id):
+        """
+        Fetch a single customer using customer_id.
+        """
+        query = "Select * from customers where customer_id = %s"
+        
+        cursor.execute(query,(customer_id,))
+        return cursor.fetchone()
+
 def display_customer(customer):
     print("=" * 40)
     print(f" Customer iD    : {customer[0]}")
@@ -122,13 +136,12 @@ def search_customer():
             print("Database Connection failed")
             return
         
-        customer_id = int(input("Enter the customer id : "))
+        customer_id = get_valid_customer_id("Enter the customer id : ")
         
-        query = "Select * from customers where customer_id = %s"
+        # query = "Select * from customers where customer_id = %s"
         
-        cursor.execute(query,(customer_id,))
-        
-        customer = cursor.fetchone()
+        # cursor.execute(query,(customer_id,))
+        customer = get_customer(cursor,customer_id)
         
         if  customer :
            display_customer(customer)
@@ -154,13 +167,9 @@ def update_customer():
             print("Database Connection failed")
             return
         
-        customer_id  = int(input("Enter customer_id : "))
+        customer_id  = get_valid_customer_id("Enter customer_id : ")
 
-        query = "select * from customers where customer_id = %s"
-        
-        cursor.execute(query,(customer_id,))
-        
-        customer = cursor.fetchone()
+        customer = get_customer(cursor,customer_id)
 
         if customer :
             display_customer(customer)
@@ -229,13 +238,10 @@ def delete_customer():
             print("Failed to connect database")
             return
         
-        customer_id = int(input("Enter Customer ID : "))
+        customer_id = get_valid_customer_id("Enter Customer ID : ")
 
-        query = "Select * from customers where customer_id = %s"
+        customer = get_customer(cursor,customer_id)
 
-        cursor.execute(query,(customer_id,))
-
-        customer = cursor.fetchone()
         if customer:
             display_customer(customer)
 

@@ -1,6 +1,10 @@
 from database.connection import get_connection,close_connection
-from services.accounts_service import display_account
+from services.accounts_service import display_account,display_account
 import mysql.connector
+from utils.validators import(
+    get_valid_amount,
+    get_non_empty_string,
+)
 
 def display_transaction(transaction):
 
@@ -121,21 +125,8 @@ def block_account():
 
         account_number = int(input("Enter account number : "))
 
-        query = """
-                    Select 
-                        accounts.account_number,
-                        customers.first_name,
-                        customers.last_name,
-                        accounts.account_type,
-                        accounts.balance,
-                        accounts.status
-                    from accounts
-                    inner join customers on 
-                    accounts.customer_id = customers.customer_id
-                    where accounts.account_number = %s;
-                        """
-        cursor.execute(query,(account_number,))
-        account = cursor.fetchone()
+        account = display_account(cursor,account_number)
+
         if account is None:
             print("Account not found")
             return
@@ -143,7 +134,7 @@ def block_account():
         else:
             display_account(account)
 
-        if account[5] == "Blocked":
+        if account[6] == "Blocked":
             print("Account is already blocked")
             return
 
@@ -184,22 +175,7 @@ def close_account():
             return
         account_number = int(input("Enter account number : "))
 
-        query = """
-                    Select 
-                        accounts.account_number,
-                        customers.first_name,
-                        customers.last_name,
-                        accounts.account_type,
-                        accounts.balance,
-                        accounts.status
-                    from accounts
-                    inner join customers on 
-                    accounts.customer_id = customers.customer_id
-                    where accounts.account_number = %s;
-                        """
-
-        cursor.execute(query,(account_number,))
-        account = cursor.fetchone()
+        account = display_account(cursor,account_number)
 
         if account is None:
             print("No account found")
@@ -207,11 +183,11 @@ def close_account():
         else:
             display_account(account)
 
-        if account[5] == 'Closed':
+        if account[6] == 'Closed':
             print("Account is already Closed")
             return
 
-        if account[4] > 0:
+        if account[5] > 0:
             print("Account cannot be closed while balance is greater than 0")
             return
 
