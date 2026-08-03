@@ -1,9 +1,13 @@
+# from webbrowser import get
+from utils.validators import get_valid_account_number
 from database.connection import get_connection,close_connection
-from services.accounts_service import display_account,display_account
+from services.accounts_service import get_account,display_account
 import mysql.connector
-from utils.validators import(
-    get_valid_amount,
-    get_non_empty_string,
+
+
+from utils.helpers import (
+    print_success,
+    print_error
 )
 
 def display_transaction(transaction):
@@ -27,9 +31,7 @@ def view_transactions():
         connection,cursor = get_connection()
 
         if connection is None:
-            print("\n" + "=" * 40)
-            print("Database Connection Failure")
-            print("=" * 40)
+            print_error("No database is connected")
             return
 
         query = """
@@ -73,7 +75,7 @@ def search_transactions():
         connection,cursor = get_connection()
 
         if connection is None:
-            print("No database is Connected")
+            print_error("No database is connected")
             return
 
         acc_num = int(input("Enter Account Number : "))
@@ -107,7 +109,7 @@ def search_transactions():
 
 
     except mysql.connector.Error as e:
-        print(f"Database Error : {e}")
+        print_error(f"Database Error : {e}")
 
     finally:
         close_connection(connection,cursor)
@@ -120,28 +122,28 @@ def block_account():
         connection,cursor = get_connection()
 
         if connection is None:
-            print("No database is connected")
+            print_error("No database is connected")
             return
 
-        account_number = int(input("Enter account number : "))
+        account_number = get_valid_account_number("Enter account number : ")
 
-        account = display_account(cursor,account_number)
+        account = get_account(cursor,account_number)
 
         if account is None:
-            print("Account not found")
+            print_error("Account not found")
             return
 
         else:
             display_account(account)
 
         if account[6] == "Blocked":
-            print("Account is already blocked")
+            print_error("Account is already blocked")
             return
 
         confirm = input("Block this account (Y/N) : ")
 
         if confirm.upper() != "Y":
-            print("Operation Cancelled")
+            print_error("Operation Cancelled")
             return
 
         query = """
@@ -158,7 +160,7 @@ def block_account():
         print("=" * 40)
 
     except mysql.connector.Error as e:
-        print(f"Dataase Error : {e}")
+        print(f"Database Error : {e}")
 
     finally:
         close_connection(connection,cursor)
@@ -173,9 +175,9 @@ def close_account():
         if connection is None:
             print("No database connected")
             return
-        account_number = int(input("Enter account number : "))
+        account_number = get_valid_account_number("Enter account number : ")
 
-        account = display_account(cursor,account_number)
+        account = get_account(cursor,account_number)
 
         if account is None:
             print("No account found")
@@ -205,9 +207,7 @@ def close_account():
         cursor.execute(query,(account_number,))
         connection.commit()
 
-        print("\n" + "=" * 40)
-        print("Account Closed Successfully")
-        print("=" * 40)
+        print_success("Account Closed Successfully")
 
     except mysql.connector.Error as e:
         print(f"Database Error : {e}")

@@ -1,10 +1,15 @@
-from database.connection import get_connection,close_connection
+from database.connection import get_connection, close_connection
 import mysql.connector
 from utils.validators import (
     get_non_empty_string,
     get_valid_email,
     get_valid_customer_id,
     get_valid_mobile
+)
+from utils.helpers import (
+    print_separator,
+    print_success,
+    print_error
 )
 
 def get_customer_input():
@@ -17,13 +22,13 @@ def get_customer_input():
     address = get_non_empty_string("Enter address : ")
 
     return{
-        "first_name" :first_name,
-        "last_name" :last_name,
-        "gender" :gender,
-        "date_of_birth" :date_of_birth,
-        "mobile" :mobile,
-        "email" :email,
-        "address" :address,
+        "first_name": first_name,
+        "last_name": last_name,
+        "gender": gender,
+        "date_of_birth": date_of_birth,
+        "mobile": mobile,
+        "email": email,
+        "address": address,
     }
 
 
@@ -37,7 +42,7 @@ def get_customer(cursor,customer_id):
         return cursor.fetchone()
 
 def display_customer(customer):
-    print("=" * 40)
+    print_separator()
     print(f" Customer iD    : {customer[0]}")
     print(f" Name           : {customer[1]} {customer[2]}")
     print(f" Gender         : {customer[3]}")
@@ -46,7 +51,7 @@ def display_customer(customer):
     print(f" Email ID       : {customer[6]}")
     print(f" Address        : {customer[7]}")
 
-def add_customers():
+def add_customer():
     connection = None
     cursor = None
     try:
@@ -86,14 +91,14 @@ def add_customers():
 
         # commit
         connection.commit()
-        print("Customer Added Successfully ")
+        print_success("Customer Added Successfully ")
         
         # close connection
     except mysql.connector.Error as e:
-        print(f"Database Error : {e}")
+        print_error(f"Database Error : {e}")
 
     finally:
-        close_connection(connection,cursor)
+        close_connection(connection, cursor)
     
 
 def view_customers():
@@ -105,14 +110,14 @@ def view_customers():
         if connection is None:
             return
         
-        query = "Select * from customers"
+        query = "Select * From customers"
 
         cursor.execute(query,)
 
         customers = cursor.fetchall()
 
         if not customers:
-            print("No customers found")
+            print_error("No customers found")
             return
         
         for customer in customers:
@@ -120,7 +125,7 @@ def view_customers():
 
 
     except mysql.connector.Error as e:
-        print(f"Database Error : {e}")
+        print_error(f"Database Error : {e}")
 
     finally:
         close_connection(connection,cursor)
@@ -133,7 +138,7 @@ def search_customer():
         connection,cursor = get_connection()
 
         if connection is None:
-            print("Database Connection failed")
+            print_error("Database Connection failed")
             return
         
         customer_id = get_valid_customer_id("Enter the customer id : ")
@@ -147,10 +152,10 @@ def search_customer():
            display_customer(customer)
         
         else:
-            print("No customer Found")
+            print_error("No customer Found")
 
     except mysql.connector.Error as e:
-        print(f"Database Error : {e}")
+        print_error(f"Database Error : {e}")
     
     finally:
         close_connection(connection,cursor)
@@ -164,7 +169,7 @@ def update_customer():
         connection , cursor = get_connection()
 
         if connection is None:
-            print("Database Connection failed")
+            print_error("Database Connection failed")
             return
         
         customer_id  = get_valid_customer_id("Enter customer_id : ")
@@ -174,7 +179,7 @@ def update_customer():
         if customer :
             display_customer(customer)
         else:
-            print("Customer not found")
+            print_error("Customer not found")
             return
         
         print("\nWhat do you want to update?")
@@ -206,8 +211,12 @@ def update_customer():
             return
        
         field = update_fields[choice]
-        
-        new_value = input(f"Enter new {field.replace('_',' ')} : ")
+        if field == "mobile":
+            new_value = get_valid_mobile(f"Enter new {field.replace('_',' ')} : ")
+        elif field == "email":
+            new_value = get_valid_email(f"Enter new {field.replace('_',' ')} : ")
+        else:
+            new_value = input(f"Enter new {field.replace('_',' ')} : ")
 
         query = f"""
         update customers set {field} = %s 
@@ -215,10 +224,11 @@ def update_customer():
 
         cursor.execute(query,(new_value,customer_id))
         connection.commit()
-        print("Customer Updated Successfully")
+
+        print_success("Customer Updated Successfully")
 
     except mysql.connector.Error as e:
-        print(f"Error : {e}")
+        print_error(f"Error : {e}")
     
     finally :
         close_connection(connection,cursor)
@@ -235,7 +245,7 @@ def delete_customer():
         connection,cursor = get_connection()
 
         if connection is None:
-            print("Failed to connect database")
+            print_error("Failed to connect database")
             return
         
         customer_id = get_valid_customer_id("Enter Customer ID : ")
@@ -246,27 +256,25 @@ def delete_customer():
             display_customer(customer)
 
         else:
-            print("no customer found")
+            print_error("no customer found")
             return
         
         cnf = input("Do you confirm want to delete this data (Y/N) ? ")
 
         if cnf.upper() != "Y":
-            print("Deletion Cancelled")
+            print_error("Deletion Cancelled")
             return
 
-        # else:
-        #     print("Proceed")
 
         query = "Delete from customers where customer_id = %s"
 
         cursor.execute(query,(customer_id,))
         
         connection.commit()
-        print("Successfully deleted ")
+        print_success("Customer deleted successfully")
 
     except mysql.connector.Error as e:
-        print(f"Error : {e}")
+        print_error(f"Error : {e}")
 
     finally:
         close_connection(connection,cursor)

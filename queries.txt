@@ -1,1 +1,18 @@
 what if i want to update or search customer by searching customers name or dateof birth ?
+
+But not:
+
+gender = input(...)
+date_of_birth = input(...)
+
+These should eventually use validators too.
+
+For example:
+
+gender = get_valid_gender(...)
+
+and
+
+date_of_birth = get_valid_date(...)
+
+Not required now, but a future improvement.

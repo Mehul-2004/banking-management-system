@@ -3,8 +3,14 @@ from services.customers_service import display_customer ,get_customer
 import mysql.connector
 from utils.validators import (
     get_valid_amount,
-    get_non_empty_string,
+    get_valid_customer_id,
 )
+from utils.helpers import (
+    print_separator,
+    print_success,
+    print_error
+)
+
 
 def get_account(cursor,account_number):
     """
@@ -38,17 +44,17 @@ def create_account():
         connection,cursor = get_connection()
     
         if connection is None:
-            print("No database is connected")
+            print_error("No database is connected")
             return
 
-        customer_id = int(input("Enter Customer id : "))
+        customer_id = get_valid_customer_id("Enter Customer id : ")
         customer = get_customer(cursor,customer_id)
 
         if customer :
             display_customer(customer)
 
         else:
-            print("No customer found")
+            print_error("No customer found")
             return
         
         print("Choose Account Type")
@@ -64,7 +70,7 @@ def create_account():
             account_type = "Current"
 
         else:
-            print("Invalid Account type")
+            print_error("Invalid Account type")
             return
         
         account_number = generate_account_number(cursor)
@@ -85,9 +91,7 @@ def create_account():
 
         connection.commit()
 
-        print("\n" + "=" * 40)
-        print("Account Created Successfully")
-        print("=" * 40)
+        print_success("Account Created Successfully")
         print(f"Customer ID    : {customer_id}")
         print(f"Account Number : {account_number}")
         print(f"Account Type   : {account_type}")
@@ -96,7 +100,7 @@ def create_account():
         print("=" * 40)
 
     except mysql.connector.Error as e:
-        print(f"Error : {e}")
+        print_error(f"Error : {e}")
 
     finally:
         close_connection(connection,cursor)
@@ -125,11 +129,12 @@ def view_account():
         connection,cursor = get_connection()
 
         if connection is None:
-            print("No Database Connected ")
+            print_error("No Database Connected ")
             return
         
         query = """
             Select 
+                accounts.account_id,
                 accounts.account_number,
                 customers.first_name,
                 customers.last_name,
@@ -146,16 +151,18 @@ def view_account():
         accounts = cursor.fetchall()
 
         for account in accounts:
+            print_separator()
             display_account(account)
 
     except mysql.connector.Error as e:
-        print(f"Error : {e}")
+        print_error(f"Error : {e}")
     
     finally:
         close_connection(connection,cursor)
 
 def display_account(account):
-    print("\n" + "=" * 40)
+    print_separator()
+    print(f"Account ID     : {account[0]}")
     print(f"Account Number : {account[1]}")
     print(f"Customer Name  : {account[2]} {account[3]}")
     print(f"Account Type   : {account[4]}")
@@ -171,7 +178,7 @@ def search_account():
         connection,cursor = get_connection()
 
         if connection is None:
-            print("No database connected")
+            print_error("No database connected")
             return
         
         account_number = int(input("Enter Account Number : "))
@@ -198,11 +205,11 @@ def search_account():
         if account:
             display_account(account)
         else:
-            print("Account Not Found")
+            print_error("Account Not Found")
             return
         
     except mysql.connector.Error as e :
-        print(f"Error : {e}")
+        print_error(f"Error : {e}")
     
     finally:
         close_connection(connection,cursor)
@@ -216,7 +223,7 @@ def deposit_money():
         connection , cursor = get_connection()
 
         if connection is None:
-            print("No Database Connected")
+            print_error("No Database Connected")
             return
         
         account_number = int(input("Enter Account Number : "))
@@ -227,13 +234,13 @@ def deposit_money():
             display_account(account)
         
         else:
-            print("Account Not Found")
+            print_error("Account Not Found")
             return
         
         dep_amt = get_valid_amount("Enter amount to Deposit : ")
 
         if dep_amt <= 0:
-            print("Deposit amount must be greater than 0")
+            print_error("Deposit amount must be greater than 0")
             return
         
         query = """
@@ -262,15 +269,15 @@ def deposit_money():
         cursor.execute(query,values)
 
         connection.commit()
-        print("\n" + "=" * 40)
-        print("Deposit Successful")
+        print_separator()
+        print_success("Deposit Successful")
         print(f"Account Number : {account_number}")
         print(f"Amount Deposited : ₹{dep_amt:.2f}")
-        print("=" * 40)
+        print_separator()
 
     except mysql.connector.Error as e:
-        print(f"Error : {e}")
-    
+        print_error(f"Error : {e}")
+
     finally:
         close_connection(connection,cursor)
 
@@ -283,7 +290,7 @@ def withdraw_money():
         connection , cursor = get_connection()
 
         if connection is None:
-            print("No Database Connected")
+            print_error("No Database Connected")
             return
         
         account_number = int(input("Enter Account Number : "))
@@ -294,24 +301,24 @@ def withdraw_money():
             display_account(account)
         
         else:
-            print("Account Not Found")
+            print_error("Account Not Found")
             return
         
         wid_amt = get_valid_amount("Enter amount to withdraw : ")
 
         balance = account[5]
         if wid_amt <= 0 :
-            print("Withdrawal amount must be greater than 0")
+            print_error("Insufficient Balance")
             return
         
         elif wid_amt > balance:
-            print("Withdraw amount must be greater than 0")
+            print_error("Withdraw amount must be greater than 0")
             return
         
         status = account[6]
 
         if status != "Active":
-            print("This account is not active")
+            print_error("This account is not active")
             return 
         
         query = """
@@ -341,14 +348,14 @@ def withdraw_money():
 
         connection.commit()
         print("\n" + "=" * 40)
-        print("Withdrawn Successful")
+        print_success("Withdrawn Successful")
         print(f"Account Number : {account_number}")
         print(f"Amount Withdrawn : ₹{wid_amt:.2f}")
-        print("=" * 40)
+        print_separator()
 
     except mysql.connector.Error as e:
-        print(f"Error : {e}")
-    
+        print_error(f"Error : {e}")
+
     finally:
         close_connection(connection,cursor)
 
@@ -362,7 +369,7 @@ def transfer_money():
         connection,cursor = get_connection()
 
         if connection is None:
-            print("No database is connected")
+            print_error ("No database is connected")
             return
 
         #sender
@@ -373,7 +380,7 @@ def transfer_money():
         if sender:
             display_account(sender)
         else:
-            print("Sender account not found")
+            print_error ("Sender account not found")
             return
         #receiver
         receiver_acc_num = int(input("Enter Receivers Account Number : "))
@@ -383,22 +390,22 @@ def transfer_money():
         if receiver:
             display_account(receiver)
         else:
-            print("Receiver account not found")
+            print_error ("Receiver account not found")
             return
 
         if sender_acc_num == receiver_acc_num:
-            print("Sender and receiver account cannot be the same.")
+            print_error ("Sender and receiver account cannot be the same.")
             return
         
         #amount
         transfer_amount = get_valid_amount("Enter the amount to transfer : ")
 
         if transfer_amount <= 0:
-            print("Transfer amount must be greater than 0.")
+            print_error("Transfer amount must be greater than 0.")
             return
 
         if transfer_amount > sender[5]:
-            print("Insufficient Balance")
+            print_error("Insufficient Balance")
             return
         
         #validate
@@ -456,13 +463,13 @@ def transfer_money():
         #commit
         connection.commit()
         print("\n" + "=" * 40)
-        print("Transfer Successful")
+        print_success("Transfer Successful")
         print(f"From    :{sender_acc_num}")
         print(f"To      :{receiver_acc_num}")
         print(f"Amount  :{transfer_amount:.2f}")
         print( "=" * 40)
     except mysql.connector.Error as e:
-        print(f"Error : {e}")
+        print_error(f"Error : {e}")
 
     finally:
         close_connection(connection,cursor)

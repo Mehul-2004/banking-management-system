@@ -1,6 +1,7 @@
 from database.connection import get_connection , close_connection
+
 from services.customers_service import (
-    add_customers,
+    add_customer,
     view_customers,
     search_customer,
     update_customer,
@@ -15,7 +16,13 @@ from services.accounts_service import(
         transfer_money
 
 )
+from utils.helpers import (
+    print_title,
+)
 from services.transaction_history import(
+    block_account,
+    close_account,
+    search_transactions,
     view_transactions,
 
 )
@@ -34,9 +41,7 @@ def test_connection():
 
 def main():
     while True:
-        print("\n" + "=" * 40)
-        print("Bank Management system")
-        print("=" * 40)
+        print_title("Bank Management System")
         print("1. Add Customer") 
         print("2. View Customer") 
         print("3. Search Customer") 
@@ -49,13 +54,16 @@ def main():
         print("10. Withdraw money") 
         print("11. Transfer Money") 
         print("12. View Transactions") 
-        print("13. Exit") 
+        print("13. Search Transactions") 
+        print("14. Block Account") 
+        print("15. Close Account") 
+        print("16. Exit") 
         print("=" * 40)
 
         choice = input("Select an option : ")
         
         if choice == "1":
-            add_customers()
+            add_customer()
         elif choice == "2":
             view_customers()
         elif choice == "3":
@@ -78,10 +86,14 @@ def main():
             transfer_money()
         elif choice == "12":
             view_transactions()
-
-
-
         elif choice == "13":
+            search_transactions()
+        elif choice == "14":
+            block_account()
+        elif choice == "15":
+            close_account()
+
+        elif choice == "16":
             print("Thank you")
             break     
         else:
