@@ -9,7 +9,9 @@ from utils.validators import (
 from utils.helpers import (
     print_separator,
     print_success,
-    print_error
+    print_error,
+    print_title,
+    search_customer_menu,
 )
 
 def get_customer_input():
@@ -130,6 +132,74 @@ def view_customers():
     finally:
         close_connection(connection,cursor)
 
+def find_customers(cursor):
+    """
+    Search Customers using different fields.
+    Returns a list of matching customers.
+    """
+    choice = search_customer_menu()
+
+    if choice == "7":
+        return[]
+
+    search_fields={
+        "1" : "customer_id",
+        "2" : "first_name",
+        "3" : "last_name",
+        "4" : "email",
+        "5" : "mobile",
+        "6" : "address"
+    }
+
+    if choice not in search_fields:
+        print_error("Invalid Choice")
+        return []
+
+    field = search_fields[choice]
+    if choice == "1":
+        value = get_valid_customer_id(f"Enter {field.replace('_',' ')} : ")
+    elif choice == "2":
+        value = get_non_empty_string(f"Enter {field.replace('_',' ')} : ")
+    elif choice == "3":
+        value = get_non_empty_string(f"Enter {field.replace('_',' ')} : ")
+    elif choice == "4":
+        value = get_valid_email(f"Enter {field.replace('_',' ')} : ")
+    elif choice == "5":
+        value = get_valid_mobile(f"Enter {field.replace('_',' ')} : ")
+    elif choice == "6":
+        value = input(f"Enter {field.replace('_',' ')} : ")
+
+    if field in ("first_name","last_name"):
+        query = f"Select * From customers Where {field} like %s"
+        cursor.execute(query,(f"%{value}%",))
+    else:
+        query = f"Select * from customers where {field} = %s"
+        cursor.execute(query,(f"%{value}%",))
+
+    return cursor.fetchall()
+
+def select_customer(customers):
+
+    if not customers:
+        return None
+
+    print_separator()
+    print_title("Matching Customer")
+
+    for customer in customers:
+        display_customer(customer)
+
+    while True:
+        customer_id = get_valid_customer_id("Enter the customer id to select : ")
+
+        for customer in customers:
+            if customer[0] == customer_id:
+                return customer
+
+        print_error("Invalid customer id. Please select from the listed customers.")
+            
+
+    
 def search_customer():
     connection = None
     cursor = None
@@ -141,19 +211,23 @@ def search_customer():
             print_error("Database Connection failed")
             return
         
-        customer_id = get_valid_customer_id("Enter the customer id : ")
+        # customer_id = get_valid_customer_id("Enter the customer id : ")
         
-        # query = "Select * from customers where customer_id = %s"
+        # customer = get_customer(cursor,customer_id)
         
-        # cursor.execute(query,(customer_id,))
-        customer = get_customer(cursor,customer_id)
+        # if  customer :
+        #    display_customer(customer)
         
-        if  customer :
-           display_customer(customer)
-        
-        else:
-            print_error("No customer Found")
+        # else:
+        #     print_error("No customer Found")
+        customers = find_customers(cursor)
 
+        if not customers:
+            print_error("No customers found")
+            return
+        for customer in customers:
+            display_customer(customer)
+            
     except mysql.connector.Error as e:
         print_error(f"Database Error : {e}")
     
@@ -172,9 +246,10 @@ def update_customer():
             print_error("Database Connection failed")
             return
         
-        customer_id  = get_valid_customer_id("Enter customer_id : ")
+        # customer_id  = get_valid_customer_id("Enter customer_id : ")
+        customers = find_customers(cursor)
+        customer = select_customer(customers)
 
-        customer = get_customer(cursor,customer_id)
 
         if customer :
             display_customer(customer)
@@ -193,6 +268,7 @@ def update_customer():
         print("8. Cancel")
 
         choice = input("Enter your choice: ")
+
         update_fields = {
             "1" : "first_name",
             "2" : "last_name",
@@ -222,7 +298,7 @@ def update_customer():
         update customers set {field} = %s 
         where customer_id = %s """
 
-        cursor.execute(query,(new_value,customer_id))
+        cursor.execute(query,(new_value,customer[0]))
         connection.commit()
 
         print_success("Customer Updated Successfully")
@@ -248,28 +324,33 @@ def delete_customer():
             print_error("Failed to connect database")
             return
         
-        customer_id = get_valid_customer_id("Enter Customer ID : ")
+        # customer_id = get_valid_customer_id("Enter Customer ID : ")
 
-        customer = get_customer(cursor,customer_id)
+        # customer = get_customer(cursor,customer_id)
 
-        if customer:
-            display_customer(customer)
+        # if customer:
+        #     display_customer(customer)
 
-        else:
-            print_error("no customer found")
-            return
+        # else:
+        #     print_error("no customer found")
+        #     return
         
+        customers = find_customers(cursor)
+        customer = select_customer(customers)
+
+        if customer is None:
+            print_error("Customer not found")
+            return
+           
         cnf = input("Do you confirm want to delete this data (Y/N) ? ")
 
         if cnf.upper() != "Y":
             print_error("Deletion Cancelled")
             return
 
-
         query = "Delete from customers where customer_id = %s"
+        cursor.execute(query,(customer[0],))
 
-        cursor.execute(query,(customer_id,))
-        
         connection.commit()
         print_success("Customer deleted successfully")
 
